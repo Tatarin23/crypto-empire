@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CryptoEmpire</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #FFD700;
+    --gold-dim: #B8960C;
+    --cyan: #00F5FF;
+    --cyan-dim: #007A80;
+    --bg: #050A14;
+    --bg2: #0A1628;
+    --bg3: #0D1F3C;
+    --card: #0F2040;
+    --card2: #162A50;
+    --text: #E8F4FD;
+    --text-dim: #7A9FC0;
+    --green: #00FF88;
+    --red: #FF4466;
+    --purple: #B44FFF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    overflow-x: hidden;
+    user-select: none;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+    animation: gridMove 20s linear infinite;
+  }
+
+  @keyframes gridMove {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(40px); }
+  }
+
+  /* Glow blobs */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .blob1 { width: 300px; height: 300px; background: var(--cyan); top: -100px; left: -100px; animation: blobFloat 8s ease-in-out infinite; }
+  .blob2 { width: 200px; height: 200px; background: var(--gold); bottom: 100px; right: -50px; animation: blobFloat 10s ease-in-out infinite reverse; }
+  .blob3 { width: 150px; height: 150px; background: var(--purple); top: 40%; left: 50%; animation: blobFloat 12s ease-in-out infinite 2s; }
+
+  @keyframes blobFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(20px, -30px) scale(1.1); }
+  }
+
+  /* App shell */
+  #app {
+    position: relative;
+    z-index: 1;
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .header {
+    padding: 16px 16px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 2px;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card);
+    border: 1px solid rgba(0,245,255,0.15);
+    border-radius: 20px;
+    padding: 6px 12px;
+  }
+
+  .user-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+
+  .user-name {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  /* Balance hero */
+  .balance-hero {
+    padding: 20px 16px 16px;
+    text-align: center;
+  }
+
+  .balance-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .balance-amount {
+    font-family: 'Orbitron', monospace;
+    font-size: 42px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold) 30%, #FFF8DC);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin-bottom: 4px;
+    transition: all 0.3s;
+  }
+
+  .balance-amount.pulse {
+    animation: balancePulse 0.4s ease;
+  }
+
+  @keyframes balancePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  .balance-ton {
+    font-size: 13px;
+    color: var(--cyan);
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  /* Rate bar */
+  .rate-bar {
+    margin: 0 16px 16px;
+    background: var(--card);
+    border: 1px solid rgba(0,245,255,0.1);
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .rate-item {
+    text-align: center;
+  }
+
+  .rate-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--green);
+  }
+
+  .rate-lbl {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .rate-divider {
+    width: 1px;
+    height: 30px;
+    background: rgba(0,245,255,0.15);
+  }
+
+  /* Nav tabs */
+  .nav {
+    display: flex;
+    background: var(--bg2);
+    border-top: 1px solid rgba(0,245,255,0.08);
+    border-bottom: 1px solid rgba(0,245,255,0.08);
+    margin-bottom: 16px;
+  }
+
+  .nav-btn {
+    flex: 1;
+    padding: 12px 4px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .nav-btn .nav-icon { font-size: 18px; }
+
+  .nav-btn.active {
+    color: var(--cyan);
+  }
+
+  .nav-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 20%; right: 20%;
+    height: 2px;
+    background: var(--cyan);
+    border-radius: 2px 2px 0 0;
+    box-shadow: 0 0 8px var(--cyan);
+  }
+
+  /* Content */
+  .tab-content { display: none; padding: 0 16px 100px; }
+  .tab-content.active { display: block; }
+
+  /* Buildings grid */
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0,245,255,0.08);
+  }
+
+  .buildings-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .building-card {
+    background: var(--card);
+    border: 1px solid rgba(0,245,255,0.1);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .building-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,245,255,0.3), transparent);
+  }
+
+  .building-card.affordable {
+    border-color: rgba(0,255,136,0.25);
+    box-shadow: 0 0 20px rgba(0,255,136,0.05);
+  }
+
+  .building-card.maxed {
+    border-color: rgba(255,215,0,0.3);
+  }
+
+  .building-icon {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    background: var(--card2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0,245,255,0.1);
+    position: relative;
+  }
+
+  .building-level {
+    position: absolute;
+    bottom: -4px; right: -4px;
+    background: var(--gold);
+    color: #000;
+    font-size: 10px;
+    font-weight: 900;
+    font-family: 'Orbitron', monospace;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .building-info { flex: 1; min-width: 0; }
+
+  .building-name {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 3px;
+  }
+
+  .building-rate {
+    font-size: 12px;
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  .building-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .buy-btn {
+    background: linear-gradient(135deg, var(--bg3), var(--card2));
+    border: 1px solid rgba(0,245,255,0.2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    min-width: 80px;
+  }
+
+  .buy-btn.can-afford {
+    background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,245,255,0.1));
+    border-color: rgba(0,255,136,0.4);
+    box-shadow: 0 0 15px rgba(0,255,136,0.1);
+  }
+
+  .buy-btn.can-afford:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 25px rgba(0,255,136,0.2);
+  }
+
+  .buy-btn.maxed-btn {
+    background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.05));
+    border-color: rgba(255,215,0,0.3);
+    cursor: default;
+  }
+
+  .buy-cost {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .buy-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    font-weight: 600;
+  }
+
+  /* Progress bar */
+  .building-progress {
+    margin-top: 8px;
+    height: 3px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .building-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  /* Referral tab */
+  .ref-hero {
+    background: linear-gradient(135deg, var(--card), var(--card2));
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ref-hero::before {
+    content: '👥';
+    position: absolute;
+    font-size: 100px;
+    opacity: 0.05;
+    top: -20px; right: -10px;
+  }
+
+  .ref-count {
+    font-family: 'Orbitron', monospace;
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .ref-count-label {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .ref-earned {
+    background: rgba(0,255,136,0.1);
+    border: 1px solid rgba(0,255,136,0.2);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 14px;
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  .ref-link-box {
+    background: var(--card);
+    border: 1px solid rgba(0,245,255,0.15);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .ref-link-title {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .ref-link-display {
+    background: var(--bg2);
+    border: 1px solid rgba(0,245,255,0.1);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    word-break: break-all;
+    margin-bottom: 10px;
+  }
+
+  .copy-btn {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(0,245,255,0.15), rgba(0,245,255,0.05));
+    border: 1px solid rgba(0,245,255,0.3);
+    border-radius: 10px;
+    padding: 12px;
+    color: var(--cyan);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .copy-btn:active { transform: scale(0.98); }
+
+  .share-btn {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.05));
+    border: 1px solid rgba(255,215,0,0.3);
+    border-radius: 10px;
+    padding: 12px;
+    color: var(--gold);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  .share-btn:active { transform: scale(0.98); }
+
+  /* Reward tiers */
+  .reward-tiers {
+    background: var(--card);
+    border: 1px solid rgba(0,245,255,0.1);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .tier {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .tier:last-child { border-bottom: none; }
+
+  .tier-icon {
+    font-size: 22px;
+    width: 36px;
+    text-align: center;
+  }
+
+  .tier-info { flex: 1; }
+  .tier-name { font-weight: 700; font-size: 14px; }
+  .tier-req { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+  .tier-reward {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    text-align: right;
+  }
+
+  .tier-status {
+    font-size: 10px;
+    color: var(--green);
+    margin-top: 2px;
+    text-align: right;
+  }
+
+  /* Friends list */
+  .friends-list {
+    background: var(--card);
+    border: 1px solid rgba(0,245,255,0.1);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .friend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .friend-item:last-child { border-bottom: none; }
+
+  .friend-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .friend-name { font-weight: 600; font-size: 14px; }
+  .friend-bonus { font-size: 11px; color: var(--green); margin-top: 2px; }
+  .friend-join { font-size: 11px; color: var(--text-dim); margin-left: auto; }
+
+  /* Stats tab */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid rgba(0,245,255,0.1);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 20px;
+    font-weight: 900;
+    margin-bottom: 4px;
+  }
+
+  .stat-lbl {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Leaderboard */
+  .leaderboard {
+    background: var(--card);
+    border: 1px solid rgba(0,245,255,0.1);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .lb-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .lb-item:last-child { border-bottom: none; }
+
+  .lb-rank {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 900;
+    width: 28px;
+    text-align: center;
+  }
+
+  .lb-rank.gold { color: var(--gold); }
+  .lb-rank.silver { color: #C0C0C0; }
+  .lb-rank.bronze { color: #CD7F32; }
+
+  .lb-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .lb-name { flex: 1; font-weight: 600; font-size: 14px; }
+  .lb-name small { display: block; font-size: 11px; color: var(--text-dim); font-weight: 400; }
+
+  .lb-score {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  /* Floating income popup */
+  .income-popup {
+    position: fixed;
+    pointer-events: none;
+    z-index: 100;
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold);
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+    animation: floatUp 1.5s ease forwards;
+  }
+
+  @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-60px); }
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--card2);
+    border: 1px solid rgba(0,245,255,0.3);
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cyan);
+    opacity: 0;
+    transition: all 0.3s;
+    white-space: nowrap;
+    z-index: 200;
+    box-shadow: 0 0 20px rgba(0,245,255,0.15);
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Collect idle btn */
+  .collect-btn {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1));
+    border: 1px solid rgba(255,215,0,0.4);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    animation: glowPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(255,215,0,0.1); }
+    50% { box-shadow: 0 0 30px rgba(255,215,0,0.25); }
+  }
+
+  .collect-btn:active { transform: scale(0.98); }
+
+  .collect-amount {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .collect-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  /* Offline badge */
+  .offline-badge {
+    display: none;
+    background: rgba(255,68,102,0.1);
+    border: 1px solid rgba(255,68,102,0.3);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 11px;
+    color: var(--red);
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,245,255,0.2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+
+<div id="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">⚡ CRYPTOEMPIRE</div>
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatarLetter">?</div>
+      <div class="user-name" id="userName">Игрок</div>
+    </div>
+  </div>
+
+  <!-- Balance -->
+  <div class="balance-hero">
+    <div class="balance-label">Ваш баланс</div>
+    <div class="balance-amount" id="balanceDisplay">0</div>
+    <div class="balance-ton" id="balanceTon">≈ 0.000 TON</div>
+  </div>
+
+  <!-- Rate bar -->
+  <div class="rate-bar">
+    <div class="rate-item">
+      <div class="rate-val" id="ratePerHour">0</div>
+      <div class="rate-lbl">монет/час</div>
+    </div>
+    <div class="rate-divider"></div>
+    <div class="rate-item">
+      <div class="rate-val" id="ratePerSec">0.0</div>
+      <div class="rate-lbl">монет/сек</div>
+    </div>
+    <div class="rate-divider"></div>
+    <div class="rate-item">
+      <div class="rate-val" id="refCount">0</div>
+      <div class="rate-lbl">рефералов</div>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <div class="nav">
+    <button class="nav-btn active" onclick="switchTab('build')" id="tab-build">
+      <span class="nav-icon">🏭</span>
+      <span>Бизнес</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('refs')" id="tab-refs">
+      <span class="nav-icon">👥</span>
+      <span>Рефералы</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('stats')" id="tab-stats">
+      <span class="nav-icon">📊</span>
+      <span>Статистика</span>
+    </button>
+  </div>
+
+  <!-- BUILD TAB -->
+  <div class="tab-content active" id="content-build">
+    <div id="collectRow" style="display:none">
+      <div class="collect-btn" onclick="collectIdle()" id="collectBtn">
+        <span>💰</span>
+        <div>
+          <div class="collect-amount" id="idleAmount">+0</div>
+          <div class="collect-label">Накопилось — забрать!</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">🏢 Ваши предприятия</div>
+
+    <div class="buildings-grid" id="buildingsGrid"></div>
+  </div>
+
+  <!-- REFS TAB -->
+  <div class="tab-content" id="content-refs">
+    <div class="ref-hero">
+      <div class="ref-count" id="refHeroCount">0</div>
+      <div class="ref-count-label">друзей приглашено</div>
+      <div class="ref-earned">+<span id="refEarned">0</span> монет заработано с рефералов</div>
+    </div>
+
+    <div class="ref-link-box">
+      <div class="ref-link-title">📎 Ваша реферальная ссылка</div>
+      <div class="ref-link-display" id="refLinkDisplay">t.me/CryptoEmpireBot?start=ref_...</div>
+      <button class="copy-btn" onclick="copyRefLink()">📋 Скопировать ссылку</button>
+      <button class="share-btn" onclick="shareRefLink()">🚀 Поделиться в Telegram</button>
+    </div>
+
+    <div class="reward-tiers">
+      <div class="section-title">🎁 Награды за рефералов</div>
+      <div class="tier">
+        <div class="tier-icon">🥉</div>
+        <div class="tier-info">
+          <div class="tier-name">Новичок</div>
+          <div class="tier-req">Каждый реферал</div>
+        </div>
+        <div>
+          <div class="tier-reward">+500 монет</div>
+          <div class="tier-status">за приглашение</div>
+        </div>
+      </div>
+      <div class="tier">
+        <div class="tier-icon">🥈</div>
+        <div class="tier-info">
+          <div class="tier-name">Коннектор</div>
+          <div class="tier-req">5 рефералов</div>
+        </div>
+        <div>
+          <div class="tier-reward">+5,000 монет</div>
+          <div class="tier-status" id="tier2status">0/5</div>
+        </div>
+      </div>
+      <div class="tier">
+        <div class="tier-icon">🥇</div>
+        <div class="tier-info">
+          <div class="tier-name">Инфлюенсер</div>
+          <div class="tier-req">20 рефералов</div>
+        </div>
+        <div>
+          <div class="tier-reward">+25,000 монет</div>
+          <div class="tier-status" id="tier3status">0/20</div>
+        </div>
+      </div>
+      <div class="tier">
+        <div class="tier-icon">💎</div>
+        <div class="tier-info">
+          <div class="tier-name">Легенда</div>
+          <div class="tier-req">50 рефералов</div>
+        </div>
+        <div>
+          <div class="tier-reward">+100,000 монет</div>
+          <div class="tier-status" id="tier4status">0/50</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="friends-list">
+      <div class="section-title">👤 Приглашённые друзья</div>
+      <div id="friendsList">
+        <div style="text-align:center; padding: 20px; color: var(--text-dim); font-size: 13px;">
+          Пока никого нет.<br>Поделитесь ссылкой!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS TAB -->
+  <div class="tab-content" id="content-stats">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val" style="color:var(--gold)" id="statTotal">0</div>
+        <div class="stat-lbl">Всего монет</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color:var(--green)" id="statRate">0</div>
+        <div class="stat-lbl">Монет/час</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color:var(--cyan)" id="statBuildings">0</div>
+        <div class="stat-lbl">Предприятий</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color:var(--purple)" id="statRefs">0</div>
+        <div class="stat-lbl">Рефералов</div>
+      </div>
+    </div>
+
+    <div class="leaderboard">
+      <div class="section-title">🏆 Топ игроков</div>
+      <div id="leaderboard"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+const COIN_TO_TON = 1000000; // 1M монет = 1 TON (символически)
+
+const BUILDINGS = [
+  { id: 'kiosk',    name: 'Ларёк',        icon: '🏪', baseRate: 5,    baseCost: 50,    maxLevel: 10, desc: 'Продаёт лимонад 24/7' },
+  { id: 'cafe',     name: 'Кафе',          icon: '☕', baseRate: 25,   baseCost: 200,   maxLevel: 10, desc: 'Популярное заведение' },
+  { id: 'market',   name: 'Магазин',       icon: '🛒', baseRate: 100,  baseCost: 800,   maxLevel: 10, desc: 'Большой поток клиентов' },
+  { id: 'factory',  name: 'Фабрика',       icon: '🏭', baseRate: 400,  baseCost: 3000,  maxLevel: 10, desc: 'Производит 24/7' },
+  { id: 'bank',     name: 'Банк',          icon: '🏦', baseRate: 1500, baseCost: 12000, maxLevel: 10, desc: 'Деньги делают деньги' },
+  { id: 'crypto',   name: 'Крипто-ферма',  icon: '⛏️', baseRate: 6000, baseCost: 50000, maxLevel: 10, desc: 'Майнит TON круглосуточно' },
+];
+
+const REF_BONUS = 500;
+const TIER_BONUSES = [
+  { count: 5,  bonus: 5000 },
+  { count: 20, bonus: 25000 },
+  { count: 50, bonus: 100000 },
+];
+
+let state = {
+  balance: 0,
+  totalEarned: 0,
+  buildings: {},      // id -> level
+  refs: [],           // [{name, joined, bonus}]
+  refEarned: 0,
+  lastSave: Date.now(),
+  lastOnline: Date.now(),
+  claimedTiers: [],
+};
+
+// ── Telegram SDK ────────────────────────────────────────
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
+
+const tgUser = tg?.initDataUnsafe?.user;
+const userId = tgUser?.id || 'demo_' + Math.random().toString(36).slice(2, 8);
+const userName = tgUser ? (tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '')) : 'Игрок';
+const userUsername = tgUser?.username || userId;
+
+// Set user info
+document.getElementById('userName').textContent = tgUser?.first_name || 'Игрок';
+document.getElementById('userAvatarLetter').textContent = (tgUser?.first_name?.[0] || 'И').toUpperCase();
+
+// Ref link
+const BOT_USERNAME = 'CryptoEmpireBot'; // <- замените на своего бота
+const refLink = `https://t.me/${BOT_USERNAME}?start=ref_${userId}`;
+document.getElementById('refLinkDisplay').textContent = refLink;
+
+// Check incoming ref
+const startParam = tg?.initDataUnsafe?.start_param || '';
+const isRef = startParam.startsWith('ref_');
+
+// ── Storage ─────────────────────────────────────────────
+const SAVE_KEY = `ce_state_${userId}`;
+
+function saveState() {
+  state.lastSave = Date.now();
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      state = { ...state, ...saved };
+    }
+  } catch(e) {}
+}
+
+// ── Calculations ─────────────────────────────────────────
+function getRate() {
+  let r = 0;
+  BUILDINGS.forEach(b => {
+    const lvl = state.buildings[b.id] || 0;
+    if (lvl > 0) r += b.baseRate * lvl;
+  });
+  return r; // per second
+}
+
+function getUpgradeCost(b, currentLevel) {
+  return Math.floor(b.baseCost * Math.pow(1.8, currentLevel));
+}
+
+function formatNum(n) {
+  if (n >= 1e9) return (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return Math.floor(n).toString();
+}
+
+// ── Idle calculation ─────────────────────────────────────
+let idleAccum = 0;
+let lastTick = Date.now();
+
+function processOfflineGain() {
+  const offlineMs = Date.now() - (state.lastOnline || Date.now());
+  const maxOfflineHours = 8;
+  const capped = Math.min(offlineMs, maxOfflineHours * 3600 * 1000);
+  const gained = getRate() * (capped / 1000);
+  if (gained > 100) {
+    idleAccum = gained;
+    document.getElementById('collectRow').style.display = 'block';
+    document.getElementById('idleAmount').textContent = '+' + formatNum(gained);
+  }
+}
+
+function collectIdle() {
+  state.balance += idleAccum;
+  state.totalEarned += idleAccum;
+  showFloatingIncome(idleAccum);
+  idleAccum = 0;
+  document.getElementById('collectRow').style.display = 'none';
+  updateUI();
+  saveState();
+  showToast('💰 Накопления собраны!');
+}
+
+// ── UI Updates ───────────────────────────────────────────
+function updateUI() {
+  const rate = getRate();
+
+  document.getElementById('balanceDisplay').textContent = formatNum(state.balance);
+  document.getElementById('balanceTon').textContent = '≈ ' + (state.balance / COIN_TO_TON).toFixed(4) + ' TON';
+  document.getElementById('ratePerHour').textContent = formatNum(rate * 3600);
+  document.getElementById('ratePerSec').textContent = rate.toFixed(1);
+  document.getElementById('refCount').textContent = state.refs.length;
+
+  // Stats
+  document.getElementById('statTotal').textContent = formatNum(state.totalEarned);
+  document.getElementById('statRate').textContent = formatNum(rate * 3600);
+  document.getElementById('statBuildings').textContent = Object.values(state.buildings).reduce((a,b) => a+b, 0);
+  document.getElementById('statRefs').textContent = state.refs.length;
+
+  // Refs
+  document.getElementById('refHeroCount').textContent = state.refs.length;
+  document.getElementById('refEarned').textContent = formatNum(state.refEarned);
+  document.getElementById('tier2status').textContent = Math.min(state.refs.length, 5) + '/5';
+  document.getElementById('tier3status').textContent = Math.min(state.refs.length, 20) + '/20';
+  document.getElementById('tier4status').textContent = Math.min(state.refs.length, 50) + '/50';
+
+  renderBuildings();
+  renderLeaderboard();
+}
+
+function renderBuildings() {
+  const grid = document.getElementById('buildingsGrid');
+  grid.innerHTML = '';
+
+  BUILDINGS.forEach(b => {
+    const level = state.buildings[b.id] || 0;
+    const maxed = level >= b.maxLevel;
+    const cost = maxed ? 0 : getUpgradeCost(b, level);
+    const affordable = !maxed && state.balance >= cost;
+    const rate = b.baseRate * (level || 0);
+
+    const card = document.createElement('div');
+    card.className = 'building-card' + (affordable ? ' affordable' : '') + (maxed ? ' maxed' : '');
+
+    const progress = (level / b.maxLevel) * 100;
+
+    card.innerHTML = `
+      <div class="building-icon">
+        ${b.icon}
+        ${level > 0 ? `<div class="building-level">${level}</div>` : ''}
+      </div>
+      <div class="building-info">
+        <div class="building-name">${b.name}</div>
+        <div class="building-rate">${level > 0 ? '+' + formatNum(rate) + '/сек' : 'Не куплено'}</div>
+        <div class="building-desc">${b.desc}</div>
+        ${level > 0 ? `
+          <div class="building-progress">
+            <div class="building-progress-fill" style="width:${progress}%"></div>
+          </div>
+        ` : ''}
+      </div>
+      <div class="buy-btn ${affordable ? 'can-afford' : ''} ${maxed ? 'maxed-btn' : ''}" onclick="${maxed ? '' : `buyBuilding('${b.id}')`}">
+        ${maxed
+          ? `<div class="buy-cost">MAX</div><div class="buy-label">Улучшено</div>`
+          : `<div class="buy-cost">${formatNum(cost)}</div><div class="buy-label">${level === 0 ? 'Купить' : 'Улучшить'}</div>`
+        }
+      </div>
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+function renderLeaderboard() {
+  // Simulated leaderboard
+  const lb = [
+    { name: 'CryptoKing', rate: 85000, refs: 47 },
+    { name: 'MoonShot',   rate: 62000, refs: 31 },
+    { name: 'TonWhale',   rate: 41000, refs: 22 },
+    { name: userName,     rate: Math.round(getRate() * 3600), refs: state.refs.length },
+    { name: 'DiamondHnd', rate: 28000, refs: 18 },
+  ].sort((a,b) => b.rate - a.rate);
+
+  const el = document.getElementById('leaderboard');
+  el.innerHTML = lb.map((p, i) => {
+    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    const rankLabel = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
+    const colors = ['#FFD700','#C0C0C0','#CD7F32','#00F5FF','#B44FFF'];
+    const isMe = p.name === userName;
+    return `
+      <div class="lb-item" style="${isMe ? 'background:rgba(0,245,255,0.04); border-radius:8px; padding-left:8px;' : ''}">
+        <div class="lb-rank ${rankClass}">${rankLabel}</div>
+        <div class="lb-avatar" style="background:${colors[i]}22; color:${colors[i]}">${p.name[0]}</div>
+        <div class="lb-name">${p.name} ${isMe ? '<span style="color:var(--cyan);font-size:10px;">(Вы)</span>' : ''}
+          <small>${p.refs} рефералов</small>
+        </div>
+        <div class="lb-score">${formatNum(p.rate)}/ч</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderFriends() {
+  const el = document.getElementById('friendsList');
+  if (state.refs.length === 0) {
+    el.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-dim); font-size: 13px;">Пока никого нет.<br>Поделитесь ссылкой!</div>`;
+    return;
+  }
+  const colors = ['#FFD700','#00F5FF','#B44FFF','#00FF88','#FF4466'];
+  el.innerHTML = state.refs.map((f, i) => `
+    <div class="friend-item">
+      <div class="friend-avatar" style="background:${colors[i%colors.length]}22; color:${colors[i%colors.length]}">${f.name[0]}</div>
+      <div>
+        <div class="friend-name">${f.name}</div>
+        <div class="friend-bonus">+${formatNum(f.bonus)} монет бонус</div>
+      </div>
+      <div class="friend-join">${f.joined}</div>
+    </div>
+  `).join('');
+}
+
+// ── Actions ──────────────────────────────────────────────
+function buyBuilding(id) {
+  const b = BUILDINGS.find(x => x.id === id);
+  const level = state.buildings[id] || 0;
+  if (level >= b.maxLevel) return;
+  const cost = getUpgradeCost(b, level);
+  if (state.balance < cost) {
+    showToast('❌ Недостаточно монет!');
+    return;
+  }
+  state.balance -= cost;
+  state.buildings[id] = level + 1;
+  showToast(`✅ ${b.name} улучшен до уровня ${level + 1}!`);
+  const bal = document.getElementById('balanceDisplay');
+  bal.classList.remove('pulse');
+  void bal.offsetWidth;
+  bal.classList.add('pulse');
+  updateUI();
+  saveState();
+}
+
+function addDemoRef() {
+  const names = ['Алексей','Мария','Дмитрий','Елена','Сергей','Анна','Иван','Ольга'];
+  const name = names[Math.floor(Math.random() * names.length)];
+  const now = new Date();
+  const joined = now.toLocaleDateString('ru-RU');
+  state.refs.push({ name, joined, bonus: REF_BONUS });
+  state.refEarned += REF_BONUS;
+  state.balance += REF_BONUS;
+  state.totalEarned += REF_BONUS;
+
+  // Check tier bonuses
+  TIER_BONUSES.forEach((t, i) => {
+    if (state.refs.length >= t.count && !state.claimedTiers.includes(i)) {
+      state.claimedTiers.push(i);
+      state.balance += t.bonus;
+      state.totalEarned += t.bonus;
+      state.refEarned += t.bonus;
+      setTimeout(() => showToast(`🎁 Бонус ${formatNum(t.bonus)} монет за ${t.count} рефералов!`), 500);
+    }
+  });
+
+  renderFriends();
+  updateUI();
+  saveState();
+  showToast(`👥 Друг ${name} присоединился! +${formatNum(REF_BONUS)} монет`);
+}
+
+function copyRefLink() {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(refLink).then(() => showToast('📋 Ссылка скопирована!'));
+  } else {
+    showToast('📋 Скопируйте ссылку вручную');
+  }
+}
+
+function shareRefLink() {
+  const text = `🚀 Играю в CryptoEmpire — строю крипто-империю!\n💰 Зарабатывай монеты пассивно и выводи в TON\n\nПрисоединяйся: ${refLink}`;
+  if (tg) {
+    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(text)}`);
+  } else {
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(text)}`, '_blank');
+  }
+}
+
+// ── Game loop ────────────────────────────────────────────
+function gameTick() {
+  const now = Date.now();
+  const dt = (now - lastTick) / 1000;
+  lastTick = now;
+  const rate = getRate();
+  if (rate > 0) {
+    const gained = rate * dt;
+    state.balance += gained;
+    state.totalEarned += gained;
+    // Update balance display without full re-render for performance
+    document.getElementById('balanceDisplay').textContent = formatNum(state.balance);
+    document.getElementById('balanceTon').textContent = '≈ ' + (state.balance / COIN_TO_TON).toFixed(4) + ' TON';
+    document.getElementById('ratePerHour').textContent = formatNum(rate * 3600);
+    document.getElementById('ratePerSec').textContent = rate.toFixed(1);
+    // Refresh buy buttons affordability
+    renderBuildings();
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('content-' + tab).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'refs') renderFriends();
+  if (tab === 'stats') renderLeaderboard();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function showFloatingIncome(amount) {
+  const el = document.createElement('div');
+  el.className = 'income-popup';
+  el.textContent = '+' + formatNum(amount);
+  el.style.left = (Math.random() * 60 + 20) + '%';
+  el.style.top = '30%';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1500);
+}
+
+// ── Init ─────────────────────────────────────────────────
+loadState();
+processOfflineGain();
+state.lastOnline = Date.now();
+
+// Give starter coins if new
+if (state.totalEarned === 0) {
+  state.balance = 50;
+  state.totalEarned = 50;
+  setTimeout(() => showToast('🎉 Добро пожаловать! +50 стартовых монет'), 800);
+}
+
+updateUI();
+renderFriends();
+
+// Game loop
+setInterval(gameTick, 250);
+// Save every 10s
+setInterval(() => { state.lastOnline = Date.now(); saveState(); }, 10000);
+
+// Demo: simulate ref joining (for demo purposes — remove in production)
+// In real game: backend validates ref via Telegram Bot API
+if (isRef) {
+  setTimeout(() => showToast('🔗 Вы перешли по реферальной ссылке!'), 1000);
+}
+
+// Demo button for testing refs (visible only in browser)
+if (!tg) {
+  const demoBtn = document.createElement('button');
+  demoBtn.textContent = '🧪 Симулировать реферала';
+  demoBtn.style.cssText = 'position:fixed;bottom:20px;right:16px;z-index:999;background:#0D1F3C;color:#00F5FF;border:1px solid #00F5FF44;border-radius:10px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:Rajdhani,sans-serif;font-weight:700;';
+  demoBtn.onclick = addDemoRef;
+  document.body.appendChild(demoBtn);
+}
+</script>
+</body>
+</html>
